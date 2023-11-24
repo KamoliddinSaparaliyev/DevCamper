@@ -1,9 +1,24 @@
 const express = require("express");
-const dotenv = require("dotenv");
+const morgan = require("morgan");
 
-dotenv.config({ path: "./config/config.env" });
+//Routes files
+const bootcamps = require("./routes/bootcamps");
+const { connectDB } = require("./config/db");
+
+require("dotenv").config({ path: "./config/config.env" });
 
 const app = express();
+
+//DB connection
+
+connectDB();
+
+//Middleware
+//Dev logging middleware
+if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
+
+//Mount Routes
+app.use("/api/v1/bootcamps", bootcamps);
 
 const PORT = process.env.PORT || 5000;
 
