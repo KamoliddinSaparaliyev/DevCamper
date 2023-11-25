@@ -1,5 +1,6 @@
 const express = require("express");
 const morgan = require("morgan");
+const colors = require("colors");
 
 //Routes files
 const bootcamps = require("./routes/bootcamps");
@@ -22,7 +23,17 @@ app.use("/api/v1/bootcamps", bootcamps);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(
+const server = app.listen(
   PORT,
-  console.log(`Server is running ${process.env.NODE_ENV} mode on port ${PORT}`)
+  console.log(
+    `Server is running ${process.env.NODE_ENV.bold} mode on port ${PORT.bold}`
+      .yellow
+  )
 );
+
+//Hnadle unhandled promise rejections
+process.on("unhandledRejection", (err, promise) => {
+  console.log(`Error: ${err.message}`.red);
+  //Close server and exit proces
+  server.close(() => process.exit(1));
+});
