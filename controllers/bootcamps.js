@@ -1,3 +1,7 @@
+const { asyncHandler } = require("../middleware/async");
+const { Bootcamp } = require("../models/Bootcamp");
+const { ErrorResponse } = require("../utils/errorResponse");
+
 /**
  * @desc Get all bootcamps
  * @route /api/v1/bootcamps
@@ -6,7 +10,11 @@
  * @param {import("express").Response} res
  * @param {import("express").NextFunction} next
  */
-exports.getBootcamps = (req, res, next) => {};
+exports.getBootcamps = asyncHandler(async (req, res, next) => {
+  const data = await Bootcamp.find();
+
+  res.status(201).json({ success: true, data });
+});
 
 /**
  * @desc Get one bootcamp
@@ -16,7 +24,17 @@ exports.getBootcamps = (req, res, next) => {};
  * @param {import("express").Response} res
  * @param {import("express").NextFunction} next
  */
-exports.getBootcamp = (req, res, next) => {};
+exports.getBootcamp = asyncHandler(async (req, res, next) => {
+  const data = await Bootcamp.findById(req.params.id);
+
+  if (!data)
+    throw new ErrorResponse(
+      `Resource not found with id of ${req.params.id}`,
+      404
+    );
+
+  res.status(200).json({ success: true, data });
+});
 
 /**
  * @desc Create new bootcamp
@@ -26,7 +44,11 @@ exports.getBootcamp = (req, res, next) => {};
  * @param {import("express").Response} res
  * @param {import("express").NextFunction} next
  */
-exports.postBootcamp = (req, res, next) => {};
+exports.postBootcamp = asyncHandler(async (req, res, next) => {
+  const data = await Bootcamp.create(req.body);
+
+  res.status(201).json({ success: true, data });
+});
 
 /**
  * @desc Update  bootcamp
@@ -36,7 +58,22 @@ exports.postBootcamp = (req, res, next) => {};
  * @param {import("express").Response} res
  * @param {import("express").NextFunction} next
  */
-exports.patchBootcamp = (req, res, next) => {};
+exports.updateBootcamp = asyncHandler(async (req, res, next) => {
+  const exisist = await Bootcamp.findById(req.params.id);
+
+  if (!exisist)
+    throw new ErrorResponse(
+      `Resource not found with id of ${req.params.id}`,
+      404
+    );
+
+  const data = await Bootcamp.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+
+  res.status(200).json({ success: true, data });
+});
 
 /**
  * @desc Delete bootcamp
@@ -46,4 +83,16 @@ exports.patchBootcamp = (req, res, next) => {};
  * @param {import("express").Response} res
  * @param {import("express").NextFunction} next
  */
-exports.deleteBootcamp = (req, res, next) => {};
+exports.deleteBootcamp = asyncHandler(async (req, res, next) => {
+  const exisist = await Bootcamp.findById(req.params.id);
+
+  if (!exisist)
+    throw new ErrorResponse(
+      `Resource not found with id of ${req.params.id}`,
+      404
+    );
+
+  const data = await Bootcamp.findByIdAndDelete(req.params.id);
+
+  res.status(200).json({ success: true, data });
+});

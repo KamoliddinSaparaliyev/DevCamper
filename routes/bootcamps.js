@@ -2,7 +2,7 @@ const {
   getBootcamps,
   postBootcamp,
   getBootcamp,
-  patchBootcamp,
+  updateBootcamp,
   deleteBootcamp,
 } = require("../controllers/bootcamps");
 
@@ -12,7 +12,7 @@ router.route("/").get(getBootcamps).post(postBootcamp);
 router
   .route("/:id")
   .get(getBootcamp)
-  .patch(patchBootcamp)
+  .patch(updateBootcamp)
   .delete(deleteBootcamp);
 
 module.exports = router;

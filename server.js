@@ -1,33 +1,37 @@
 const express = require("express");
 const morgan = require("morgan");
-const colors = require("colors");
+require("colors");
+const { connectDB } = require("./config/db");
+const { errorHandler } = require("./middleware/error");
 
 //Routes files
 const bootcamps = require("./routes/bootcamps");
-const { connectDB } = require("./config/db");
+const { config } = require("./config/config");
 
-require("dotenv").config({ path: "./config/config.env" });
+//DB connection
+connectDB();
 
 const app = express();
 
-//DB connection
-
-connectDB();
+//JSON parse
+app.use(express.json());
 
 //Middleware
 //Dev logging middleware
-if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
+if (config.node_env === "development") app.use(morgan("dev"));
 
 //Mount Routes
 app.use("/api/v1/bootcamps", bootcamps);
 
-const PORT = process.env.PORT || 5000;
+//Error handling
+app.use(errorHandler);
+
+const PORT = config.port || 5000;
 
 const server = app.listen(
   PORT,
   console.log(
-    `Server is running ${process.env.NODE_ENV.bold} mode on port ${PORT.bold}`
-      .yellow
+    `Server is running ${config.node_env.bold} mode on port ${PORT.bold}`.yellow
   )
 );
 

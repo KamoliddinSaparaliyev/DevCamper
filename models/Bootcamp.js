@@ -1,19 +1,21 @@
 const mongoose = require("mongoose");
+const slugify = require("slugify");
+const { geocoder } = require("../utils/geocoder");
 
 const BootcampSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      requireq: [true, "Please add a name"],
-      uniqe: true,
+      required: [true, "Please add a name"],
+      unique: true,
       trim: true,
-      maxLength: [50, "Name can not be more then 50 characters"],
+      maxlength: [50, "Name can not be more then 50 characters"],
     },
     slug: String,
     description: {
       type: String,
-      requireq: [true, "Please add a description"],
-      maxLength: [500, "Description can not be more then 500 characters"],
+      required: [true, "Please add a description"],
+      maxlength: [500, "Description can not be more then 500 characters"],
     },
     website: {
       type: String,
@@ -24,11 +26,7 @@ const BootcampSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      match: [
-        /(^(\+88|0088|88)?(01){1}[3456789]{1}(\d){8})$/,
-        "Please enter phone number",
-      ],
-      maxLength: [20, "Phone number can not be long than 20 characters"],
+      maxlength: [20, "Phone number can not be long than 20 characters"],
     },
     email: {
       type: String,
@@ -37,15 +35,14 @@ const BootcampSchema = new mongoose.Schema(
         "Please add a valid emil",
       ],
     },
+    address: { type: String, required: [true, "Please add a address"] },
     location: {
       type: {
         type: String,
         enum: ["Point"],
-        required: true,
       },
       coordinates: {
         type: [Number],
-        required: true,
         index: "2dsphere",
       },
       formattedAddress: String,
@@ -55,8 +52,8 @@ const BootcampSchema = new mongoose.Schema(
       zipcode: String,
       country: String,
     },
-    carerrs: {
-      type: String,
+    careers: {
+      type: [String],
       required: true,
       enum: [
         "Web Development",
@@ -98,6 +95,32 @@ const BootcampSchema = new mongoose.Schema(
     },
   }
 );
+
+//Create slug from from the name
+BootcampSchema.pre("save", function (next) {
+  this.slug = slugify(this.name, { lower: true });
+
+  next();
+});
+
+//Geocode & location field
+BootcampSchema.pre("save", async function (next) {
+  const loc = await geocoder.geocode(this.address);
+
+  this.location = {
+    type: "Point",
+    coordinates: [loc[0].longitude, loc[0].latitude],
+    formattedAddress: loc[0].formattedAddress,
+    street: loc[0].streetName,
+    city: loc[0].city,
+    state: loc[0].stateCode,
+    zipcode: loc[0].zipcode,
+    country: loc[0].countryCode,
+  };
+
+  this.address = undefined;
+  next();
+});
 
 const Bootcamp = mongoose.model("Bootcamp", BootcampSchema);
 
