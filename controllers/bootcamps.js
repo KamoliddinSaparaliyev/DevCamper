@@ -1,6 +1,6 @@
 const { asyncHandler } = require("../middleware/async");
-const { Bootcamp } = require("../models/Bootcamp");
 const { ErrorResponse } = require("../utils/errorResponse");
+const { Bootcamp } = require("../models/Bootcamp");
 const { geocoder } = require("../utils/geocoder");
 
 /**
@@ -56,7 +56,7 @@ exports.getBootcamps = asyncHandler(async (req, res, next) => {
   query = query.skip(startIndex).limit(limit);
 
   // Execute the query
-  const data = await query;
+  const data = await query.populate("courses");
 
   // Pagination result
   const pagination = {};
@@ -146,17 +146,17 @@ exports.updateBootcamp = asyncHandler(async (req, res, next) => {
  * @param {import("express").NextFunction} next
  */
 exports.deleteBootcamp = asyncHandler(async (req, res, next) => {
-  const exisist = await Bootcamp.findById(req.params.id);
+  const bootcamp = await Bootcamp.findById(req.params.id);
 
-  if (!exisist)
+  if (!bootcamp) {
     throw new ErrorResponse(
       `Resource not found with id of ${req.params.id}`,
       404
     );
-
-  const data = await Bootcamp.findByIdAndDelete(req.params.id);
-
-  res.status(200).json({ success: true, data });
+  }
+  const result = await bootcamp.deleteOne();
+  console.log(result);
+  res.status(200).json({ success: true, data: {} });
 });
 
 /**

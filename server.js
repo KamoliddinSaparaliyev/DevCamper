@@ -1,12 +1,13 @@
 const express = require("express");
 const morgan = require("morgan");
-require("colors");
+const colors = require("colors");
 const { connectDB } = require("./config/db");
 const { errorHandler } = require("./middleware/error");
+const { config } = require("./config/config");
 
 //Routes files
 const bootcamps = require("./routes/bootcamps");
-const { config } = require("./config/config");
+const courses = require("./routes/courses");
 
 //DB connection
 connectDB();
@@ -22,6 +23,7 @@ if (config.node_env === "development") app.use(morgan("dev"));
 
 //Mount Routes
 app.use("/api/v1/bootcamps", bootcamps);
+app.use("/api/v1/courses", courses);
 
 //Error handling
 app.use(errorHandler);
