@@ -1,6 +1,6 @@
 const { asyncHandler } = require("../middleware/async");
-const { ErrorResponse } = require("../utils/errorResponse");
 const { Bootcamp } = require("../models/Bootcamp");
+const { ErrorResponse } = require("../utils/errorResponse");
 const { geocoder } = require("../utils/geocoder");
 
 /**

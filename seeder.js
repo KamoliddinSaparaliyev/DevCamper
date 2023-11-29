@@ -17,9 +17,9 @@ const connectDB = async () => {
 
 const importData = async () => {
   try {
-    await Bootcamp.create(
-      JSON.parse(fs.readFileSync(__dirname + "/_data/bootcamps.json", "utf-8"))
-    );
+    // await Bootcamp.create(
+    //   JSON.parse(fs.readFileSync(__dirname + "/_data/bootcamps.json", "utf-8"))
+    // );
 
     await Course.create(
       JSON.parse(fs.readFileSync(__dirname + "/_data/courses.json", "utf-8"))
