@@ -13,15 +13,14 @@ const { findResourceById } = require("../utils/findModelById");
  * @param {import("express").NextFunction} next
  */
 exports.getCourses = asyncHandler(async (req, res, nex) => {
-  let query;
   if (req.params.bootcampId) {
-    query = Course.find({ bootcamp: req.params.bootcampId });
+    const courses = await Course.find({ bootcamp: req.params.bootcampId });
+    return res
+      .status(200)
+      .json({ success: true, count: courses.length, data: courses });
   } else {
-    query = Course.find();
+    res.status(200).json(res.advancedResults);
   }
-  const courses = await query;
-
-  res.status(200).json({ success: true, count: courses.length, data: courses });
 });
 
 /**

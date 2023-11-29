@@ -7,6 +7,8 @@ const {
   getBootcampInRadius,
   bootcampPhotoUpload,
 } = require("../controllers/bootcamps");
+const { advancedResults } = require("../middleware/advancedRestults");
+const { Bootcamp } = require("../models/Bootcamp");
 const { upload } = require("../utils/multer");
 
 // Include other resource routers
@@ -21,7 +23,10 @@ router.route("/:id/photo").put(upload.single("file"), bootcampPhotoUpload);
 
 router.route("/radius/:zipcode/:distance").get(getBootcampInRadius);
 
-router.route("/").get(getBootcamps).post(postBootcamp);
+router
+  .route("/")
+  .get(advancedResults(Bootcamp, "courses"), getBootcamps)
+  .post(postBootcamp);
 
 router
   .route("/:id")
