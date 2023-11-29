@@ -1,11 +1,12 @@
 const { asyncHandler } = require("../middleware/async");
 const { Bootcamp } = require("../models/Bootcamp");
 const { ErrorResponse } = require("../utils/errorResponse");
+const { findResourceById } = require("../utils/findModelById");
 const { geocoder } = require("../utils/geocoder");
 
 /**
  * @desc Get all bootcamps
- * @route /api/v1/bootcamps
+ * @route GET /api/v1/bootcamps
  * @access Public
  * @param {import("express").Request} req
  * @param {import("express").Response} res
@@ -80,7 +81,7 @@ exports.getBootcamps = asyncHandler(async (req, res, next) => {
 
 /**
  * @desc Get one bootcamp
- * @route /api/v1/bootcamps/:id
+ * @route GET /api/v1/bootcamps/:id
  * @access Public
  * @param {import("express").Request} req
  * @param {import("express").Response} res
@@ -100,7 +101,7 @@ exports.getBootcamp = asyncHandler(async (req, res, next) => {
 
 /**
  * @desc Create new bootcamp
- * @route /api/v1/bootcamps
+ * @route POST /api/v1/bootcamps
  * @access Private
  * @param {import("express").Request} req
  * @param {import("express").Response} res
@@ -114,7 +115,7 @@ exports.postBootcamp = asyncHandler(async (req, res, next) => {
 
 /**
  * @desc Update  bootcamp
- * @route /api/v1/bootcamps/:id
+ * @route PATCH /api/v1/bootcamps/:id
  * @access Private
  * @param {import("express").Request} req
  * @param {import("express").Response} res
@@ -139,7 +140,7 @@ exports.updateBootcamp = asyncHandler(async (req, res, next) => {
 
 /**
  * @desc Delete bootcamp
- * @route /api/v1/bootcamps/:id
+ * @route DELETE /api/v1/bootcamps/:id
  * @access Private
  * @param {import("express").Request} req
  * @param {import("express").Response} res
@@ -161,7 +162,7 @@ exports.deleteBootcamp = asyncHandler(async (req, res, next) => {
 
 /**
  * @desc Get one bootcamp wiht zipcode and distance
- * @route /api/v1/bootcamps/radius/:zipcode/:distance
+ * @route GET /api/v1/bootcamps/radius/:zipcode/:distance
  * @access Public
  * @param {import("express").Request} req
  * @param {import("express").Response} res
@@ -183,4 +184,30 @@ exports.getBootcampInRadius = asyncHandler(async (req, res, next) => {
   res
     .status(200)
     .json({ success: true, data: bootcamps, count: bootcamps.length });
+});
+
+/**
+ * @desc Upload file for bootcamp
+ * @route PUT /api/v1/bootcamps/:id/photo
+ * @access Private
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @param {import("express").NextFunction} next
+ */
+exports.bootcampPhotoUpload = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+
+  await findResourceById(Bootcamp, id);
+
+  if (!req.file) throw new ErrorResponse("Please upload a file", 400);
+
+  await Bootcamp.findByIdAndUpdate(
+    id,
+    {
+      photo: req.file.filename,
+    },
+    { new: true }
+  );
+
+  res.status(200).json({ success: true, data: req.file.filename });
 });

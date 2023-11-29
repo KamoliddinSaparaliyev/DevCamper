@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 const morgan = require("morgan");
 const colors = require("colors");
@@ -16,6 +17,7 @@ const app = express();
 
 //JSON parse
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
 
 //Middleware
 //Dev logging middleware
