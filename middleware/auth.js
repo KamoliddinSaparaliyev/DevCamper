@@ -1,0 +1,34 @@
+const jwt = require("jsonwebtoken");
+const asyncHandler = require("express-async-handler");
+const { config } = require("../config/config");
+const { ErrorResponse } = require("../utils/errorResponse");
+const { User } = require("../models/User");
+
+exports.protect = asyncHandler(async (req, res, next) => {
+  // Check for Authorization header
+  if (
+    !req.headers.authorization ||
+    !req.headers.authorization.startsWith("Bearer")
+  )
+    throw new ErrorResponse("Not authorized to access this route", 401);
+
+  // Get token from header
+  const token = req.headers.authorization.split(" ")[1];
+
+  // Verify token
+  try {
+    const decoded = jwt.verify(token, config.jwt.secret);
+
+    // Find user from database using the decoded user ID
+    const user = await User.findById(decoded.user.id);
+
+    // Check if user exists
+    if (!user) throw new ErrorResponse("User not found", 404);
+
+    // Set user in request object for use in subsequent middleware
+    req.user = user;
+    next();
+  } catch (err) {
+    throw new ErrorResponse("Invalid token", 401);
+  }
+});
