@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const { Course } = require("../models/Course");
 const { Bootcamp } = require("../models/Bootcamp");
 const { findResourceById } = require("../utils/findModelById");
+const { ErrorResponse } = require("../utils/errorResponse");
 
 /**
  * @desc Get all courses
@@ -43,10 +44,18 @@ exports.getCourse = asyncHandler(async (req, res, nex) => {
  */
 exports.postCourse = asyncHandler(async (req, res, nex) => {
   const { bootcampId } = req.params;
+  const { id, role } = req.user;
 
   req.body.bootcamp = bootcampId;
+  req.body.user = id;
 
-  await findResourceById(Bootcamp, bootcampId);
+  const bootcamp = await findResourceById(Bootcamp, bootcampId);
+
+  if (bootcamp.user.toString() !== id && role !== "admin")
+    throw new ErrorResponse(
+      `User ${id} is not authorized to add a course to bootcamp ${bootcampId}`,
+      401
+    );
 
   const course = await Course.create(req.body);
 
@@ -59,11 +68,18 @@ exports.postCourse = asyncHandler(async (req, res, nex) => {
  * @access Private
  */
 exports.updateCourse = asyncHandler(async (req, res, nex) => {
-  const { id } = req.params;
+  const { id: courseId } = req.params;
+  const { id, role } = req.user;
 
-  await findResourceById(Course, id);
+  let course = await findResourceById(Course, courseId);
 
-  const course = await Course.findByIdAndUpdate(id, req.body, {
+  if (course.user.toString() !== id && role !== "admin")
+    throw new ErrorResponse(
+      `User ${id} is not authorized to update course ${courseId}`,
+      401
+    );
+
+  course = await Course.findByIdAndUpdate(courseId, req.body, {
     new: true,
     runValidators: true,
   });
@@ -77,11 +93,18 @@ exports.updateCourse = asyncHandler(async (req, res, nex) => {
  * @access Private
  */
 exports.deleteCourse = asyncHandler(async (req, res, nex) => {
-  const { id } = req.params;
+  const { id: courseId } = req.params;
+  const { id, role } = req.user;
 
-  const course = await findResourceById(Course, id);
+  const course = await findResourceById(Course, courseId);
+
+  if (course.user.toString() !== id && role !== "admin")
+    throw new ErrorResponse(
+      `User ${id} is not authorized to delete  course ${courseId}`,
+      401
+    );
 
   await course.deleteOne();
 
-  res.status(200).json({ success: true, data: course });
+  res.status(200).json({ success: true, data: {} });
 });
