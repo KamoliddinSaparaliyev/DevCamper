@@ -16,6 +16,7 @@ const config = {
   jwt: {
     secret: process.env.JWT_SECRET,
     expire: process.env.JWT_EXPIRE,
+    cookie_expire: process.env.JWT_COOKIE_EXPIRE,
   },
 };
 

@@ -1,3 +1,4 @@
+const { config } = require("../config/config");
 const { asyncHandler } = require("../middleware/async");
 const { User } = require("../models/User");
 const { ErrorResponse } = require("../utils/errorResponse");
@@ -47,7 +48,25 @@ exports.login = asyncHandler(async (req, res, next) => {
 
   if (!isMatch) throw new ErrorResponse("Invalid credebtials", 401);
 
+  sendTokenResponse(user, 200, res);
+});
+
+const sendTokenResponse = (user, statusCode, res) => {
   const token = user.getSignedJwtToken();
 
-  res.status(200).json({ success: true, token });
-});
+  const currentDate = new Date();
+  const date = config.jwt.cookie_expire * 1000 * 60 * 60 * 24;
+  const futureDate = new Date(currentDate.getTime() + date);
+
+  const options = {
+    expires: futureDate,
+    httpOnly: true,
+  };
+
+  if (config.node_env === "production") options.secure = true;
+
+  res
+    .status(statusCode)
+    .cookie("token", token, options)
+    .json({ success: true, token });
+};

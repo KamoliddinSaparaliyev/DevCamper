@@ -2,6 +2,7 @@ const path = require("path");
 const express = require("express");
 const morgan = require("morgan");
 const colors = require("colors");
+const cookieParser = require("cookie-parser");
 const { connectDB } = require("./config/db");
 const { errorHandler } = require("./middleware/error");
 const { config } = require("./config/config");
@@ -11,14 +12,17 @@ const bootcamps = require("./routes/bootcamps");
 const courses = require("./routes/courses");
 const auth = require("./routes/auth");
 
-//DB connection
+// DB connection
 connectDB();
 
 const app = express();
 
-//JSON parse
+// JSON parse
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+
+// Cookie parser
+app.use(cookieParser());
 
 //Middleware
 //Dev logging middleware
