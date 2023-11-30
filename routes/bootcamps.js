@@ -8,6 +8,7 @@ const {
   bootcampPhotoUpload,
 } = require("../controllers/bootcamps");
 const { advancedResults } = require("../middleware/advancedRestults");
+const { protect } = require("../middleware/auth");
 const { Bootcamp } = require("../models/Bootcamp");
 const { upload } = require("../utils/multer");
 
@@ -19,19 +20,21 @@ const router = require("express").Router();
 // Re-route into other resource routers
 router.use("/:bootcampId/courses", courseRouter);
 
-router.route("/:id/photo").put(upload.single("file"), bootcampPhotoUpload);
+router
+  .route("/:id/photo")
+  .put(protect, upload.single("file"), bootcampPhotoUpload);
 
 router.route("/radius/:zipcode/:distance").get(getBootcampInRadius);
 
 router
   .route("/")
   .get(advancedResults(Bootcamp, "courses"), getBootcamps)
-  .post(postBootcamp);
+  .post(protect, postBootcamp);
 
 router
   .route("/:id")
   .get(getBootcamp)
-  .patch(updateBootcamp)
-  .delete(deleteBootcamp);
+  .patch(protect, updateBootcamp)
+  .delete(protect, deleteBootcamp);
 
 module.exports = router;

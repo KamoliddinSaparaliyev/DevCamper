@@ -1,4 +1,4 @@
-const { asyncHandler } = require("../middleware/async");
+const asyncHandler = require("express-async-handler");
 const { Bootcamp } = require("../models/Bootcamp");
 const { ErrorResponse } = require("../utils/errorResponse");
 const { findResourceById } = require("../utils/findModelById");

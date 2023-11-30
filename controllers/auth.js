@@ -1,8 +1,7 @@
 const { config } = require("../config/config");
-const { asyncHandler } = require("../middleware/async");
+const asyncHandler = require("express-async-handler");
 const { User } = require("../models/User");
 const { ErrorResponse } = require("../utils/errorResponse");
-const { findResourceById } = require("../utils/findModelById");
 
 /**
  * @desc Register User

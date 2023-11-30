@@ -1,79 +1,82 @@
-const advancedResults = (model, populate) => async (req, res, next) => {
-  const reqQuery = { ...req.query };
+const asyncHandler = require("express-async-handler");
 
-  // Extract fields to remove from query
-  const removeFields = ["select", "sort", "page", "limit"];
+const advancedResults = (model, populate) =>
+  asyncHandler(async (req, res, next) => {
+    const reqQuery = { ...req.query };
 
-  // Remove fields from reqQuery
-  removeFields.forEach((param) => delete reqQuery[param]);
+    // Extract fields to remove from query
+    const removeFields = ["select", "sort", "page", "limit"];
 
-  // Convert query object to string to manipulate
-  let queryStr = JSON.stringify(reqQuery);
+    // Remove fields from reqQuery
+    removeFields.forEach((param) => delete reqQuery[param]);
 
-  // Add MongoDB operators ($gt, $gte, etc.) to query string
-  queryStr = queryStr.replace(
-    /\b(gt|gte|lt|lte|in)\b/g,
-    (match) => `$${match}`
-  );
+    // Convert query object to string to manipulate
+    let queryStr = JSON.stringify(reqQuery);
 
-  // Parse the modified query string back to an object
-  let query = model.find(JSON.parse(queryStr));
+    // Add MongoDB operators ($gt, $gte, etc.) to query string
+    queryStr = queryStr.replace(
+      /\b(gt|gte|lt|lte|in)\b/g,
+      (match) => `$${match}`
+    );
 
-  // Select specific fields if specified in query
-  if (req.query.select) {
-    const fields = req.query.select.split(",").join(" ");
-    query = query.select(fields);
-  }
+    // Parse the modified query string back to an object
+    let query = model.find(JSON.parse(queryStr));
 
-  // Sort
-  if (req.query.sort) {
-    const sortBy = req.query.sort.split(",").join(" ");
-    query = query.sort(sortBy);
-  } else {
-    query = query.sort("-createdAt");
-  }
+    // Select specific fields if specified in query
+    if (req.query.select) {
+      const fields = req.query.select.split(",").join(" ");
+      query = query.select(fields);
+    }
 
-  // Pagination
-  const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 100;
-  const startIndex = (page - 1) * limit;
-  const endIndex = page * limit;
-  const total = await model.countDocuments();
+    // Sort
+    if (req.query.sort) {
+      const sortBy = req.query.sort.split(",").join(" ");
+      query = query.sort(sortBy);
+    } else {
+      query = query.sort("-createdAt");
+    }
 
-  query = query.skip(startIndex).limit(limit);
+    // Pagination
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 100;
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+    const total = await model.countDocuments();
 
-  // Populate
-  if (populate) {
-    query = query.populate(populate);
-  }
+    query = query.skip(startIndex).limit(limit);
 
-  // Execute the query
-  const data = await query;
+    // Populate
+    if (populate) {
+      query = query.populate(populate);
+    }
 
-  // Pagination result
-  const pagination = {};
+    // Execute the query
+    const data = await query;
 
-  if (endIndex < total) {
-    pagination.next = {
-      page: page + 1,
-      limit,
+    // Pagination result
+    const pagination = {};
+
+    if (endIndex < total) {
+      pagination.next = {
+        page: page + 1,
+        limit,
+      };
+    }
+
+    if (startIndex > 0) {
+      pagination.prev = {
+        page: page - 1,
+        limit,
+      };
+    }
+    res.advancedResults = {
+      success: true,
+      count: data.length,
+      total: total.length,
+      data,
+      pagination,
     };
-  }
-
-  if (startIndex > 0) {
-    pagination.prev = {
-      page: page - 1,
-      limit,
-    };
-  }
-  res.advancedResults = {
-    success: true,
-    count: data.length,
-    total: total.length,
-    data,
-    pagination,
-  };
-  next();
-};
+    next();
+  });
 
 module.exports = { advancedResults };
