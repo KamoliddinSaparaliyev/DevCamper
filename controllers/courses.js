@@ -5,12 +5,9 @@ const { findResourceById } = require("../utils/findModelById");
 
 /**
  * @desc Get all courses
- * @route /api/v1/courses
- * @route /api/v1/bootcamps/:bootcampId/courses
+ * @route GET /api/v1/courses
+ * @route GET /api/v1/bootcamps/:bootcampId/courses
  * @access Public
- * @param {import("express").Request} req
- * @param {import("express").Response} res
- * @param {import("express").NextFunction} next
  */
 exports.getCourses = asyncHandler(async (req, res, nex) => {
   if (req.params.bootcampId) {
@@ -25,11 +22,8 @@ exports.getCourses = asyncHandler(async (req, res, nex) => {
 
 /**
  * @desc Get one course
- * @route /api/v1/courses/:id
+ * @route GET /api/v1/courses/:id
  * @access Public
- * @param {import("express").Request} req
- * @param {import("express").Response} res
- * @param {import("express").NextFunction} next
  */
 exports.getCourse = asyncHandler(async (req, res, nex) => {
   await findResourceById(Course, req.params.id);
@@ -44,11 +38,8 @@ exports.getCourse = asyncHandler(async (req, res, nex) => {
 
 /**
  * @desc Create new courses
- * @route /api/v1/bootcamps/:bootcampId/courses
+ * @route POST /api/v1/bootcamps/:bootcampId/courses
  * @access Private
- * @param {import("express").Request} req
- * @param {import("express").Response} res
- * @param {import("express").NextFunction} next
  */
 exports.postCourse = asyncHandler(async (req, res, nex) => {
   const { bootcampId } = req.params;
@@ -64,11 +55,8 @@ exports.postCourse = asyncHandler(async (req, res, nex) => {
 
 /**
  * @desc Update course
- * @route /api/v1/courses/:id
+ * @route PATCH /api/v1/courses/:id
  * @access Private
- * @param {import("express").Request} req
- * @param {import("express").Response} res
- * @param {import("express").NextFunction} next
  */
 exports.updateCourse = asyncHandler(async (req, res, nex) => {
   const { id } = req.params;
@@ -85,11 +73,8 @@ exports.updateCourse = asyncHandler(async (req, res, nex) => {
 
 /**
  * @desc Delet course
- * @route /api/v1/courses/:id
+ * @route DELETE /api/v1/courses/:id
  * @access Private
- * @param {import("express").Request} req
- * @param {import("express").Response} res
- * @param {import("express").NextFunction} next
  */
 exports.deleteCourse = asyncHandler(async (req, res, nex) => {
   const { id } = req.params;

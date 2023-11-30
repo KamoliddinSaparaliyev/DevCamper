@@ -8,7 +8,7 @@ const {
   bootcampPhotoUpload,
 } = require("../controllers/bootcamps");
 const { advancedResults } = require("../middleware/advancedRestults");
-const { protect } = require("../middleware/auth");
+const { protect, authorize } = require("../middleware/auth");
 const { Bootcamp } = require("../models/Bootcamp");
 const { upload } = require("../utils/multer");
 
@@ -22,19 +22,24 @@ router.use("/:bootcampId/courses", courseRouter);
 
 router
   .route("/:id/photo")
-  .put(protect, upload.single("file"), bootcampPhotoUpload);
+  .put(
+    protect,
+    authorize("publisher"),
+    upload.single("file"),
+    bootcampPhotoUpload
+  );
 
 router.route("/radius/:zipcode/:distance").get(getBootcampInRadius);
 
 router
   .route("/")
   .get(advancedResults(Bootcamp, "courses"), getBootcamps)
-  .post(protect, postBootcamp);
+  .post(protect, authorize("publisher"), postBootcamp);
 
 router
   .route("/:id")
   .get(getBootcamp)
-  .patch(protect, updateBootcamp)
-  .delete(protect, deleteBootcamp);
+  .patch(protect, authorize("publisher"), updateBootcamp)
+  .delete(protect, authorize("publisher"), deleteBootcamp);
 
 module.exports = router;
