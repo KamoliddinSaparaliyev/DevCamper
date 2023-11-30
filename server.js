@@ -9,6 +9,7 @@ const { config } = require("./config/config");
 //Routes files
 const bootcamps = require("./routes/bootcamps");
 const courses = require("./routes/courses");
+const auth = require("./routes/auth");
 
 //DB connection
 connectDB();
@@ -26,6 +27,7 @@ if (config.node_env === "development") app.use(morgan("dev"));
 //Mount Routes
 app.use("/api/v1/bootcamps", bootcamps);
 app.use("/api/v1/courses", courses);
+app.use("/api/v1/auth", auth);
 
 //Error handling
 app.use(errorHandler);

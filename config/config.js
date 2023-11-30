@@ -13,6 +13,10 @@ const config = {
     provider: process.env.GEOCODER_PROVIDER,
     apiKey: process.env.GEOCODER_API_KEY,
   },
+  jwt: {
+    secret: process.env.JWT_SECRET,
+    expire: process.env.JWT_EXPIRE,
+  },
 };
 
 module.exports = { config };

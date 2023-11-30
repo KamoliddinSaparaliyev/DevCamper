@@ -1,4 +1,7 @@
 const mongoose = require("mongoose");
+const { genSalt, hash, compare } = require("bcryptjs");
+const { sign } = require("jsonwebtoken");
+const { config } = require("../config/config");
 
 const UserSchema = new mongoose.Schema(
   {
@@ -32,5 +35,23 @@ const UserSchema = new mongoose.Schema(
     },
   }
 );
+
+// Hashing password
+UserSchema.pre("save", async function (next) {
+  const salt = await genSalt(10);
+  this.password = await hash(this.password, salt);
+});
+
+// Sign JWT token and return
+UserSchema.methods.getSignedJwtToken = function () {
+  return sign({ user: { id: this._id } }, config.jwt.secret, {
+    expiresIn: config.jwt.expire,
+  });
+};
+
+// Compare password
+UserSchema.methods.matchPassword = async function (enteredPassword) {
+  return await compare(enteredPassword, this.password);
+};
 
 module.exports.User = mongoose.model("User", UserSchema);
