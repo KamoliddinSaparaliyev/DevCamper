@@ -21,6 +21,8 @@ const errorHandler = (err, req, res, next) => {
       Object.values(err.errors).map((e) => e.message),
       400
     );
+  } else if (err.name === "JsonWebTokenError") {
+    err = new ErrorResponse("Invalid token", 401);
   }
 
   res.status(error.statusCode || 500).json({
