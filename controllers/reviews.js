@@ -72,3 +72,56 @@ exports.addReview = asyncHandler(async (req, res, nex) => {
 
   res.status(200).json({ success: true, data: review });
 });
+
+/**
+ * @desc   Update review
+ * @route  PUT /api/v1/reviews/:id
+ * @access Private
+ */
+exports.updateReview = asyncHandler(async (req, res, nex) => {
+  let review = await Review.findOne({ _id: req.params.id, user: req.user.id });
+
+  if (!review)
+    throw new ErrorResponse(
+      `Resource not found with id of ${req.params.id}`,
+      404
+    );
+
+  if (req.user.role !== "admin")
+    throw new ErrorResponse(
+      `User ${req.user.id} is not authorized to update this review`,
+      401
+    );
+
+  review = await Review.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+
+  res.status(200).json({ success: true, data: review });
+});
+
+/**
+ * @desc   Delete review
+ * @route  DELETE /api/v1/reviews/:id
+ * @access Private
+ */
+exports.deleteReview = asyncHandler(async (req, res, nex) => {
+  let review = await Review.findOne({ _id: req.params.id, user: req.user.id });
+
+  if (!review)
+    throw new ErrorResponse(
+      `Resource not found with id of ${req.params.id}`,
+      404
+    );
+
+  if (req.user.role !== "admin")
+    throw new ErrorResponse(
+      `User ${req.user.id} is not authorized to delet this review`,
+      401
+    );
+
+  await review.deleteOne();
+
+  res.status(200).json({ success: true, data: {} });
+});
