@@ -14,11 +14,13 @@ const { upload } = require("../utils/multer");
 
 // Include other resource routers
 const courseRouter = require("./courses");
+const reviewRouter = require("./reviews");
 
 const router = require("express").Router();
 
 // Re-route into other resource routers
 router.use("/:bootcampId/courses", courseRouter);
+router.use("/:bootcampId/reviews", reviewRouter);
 
 router
   .route("/:id/photo")
