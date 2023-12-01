@@ -3,6 +3,12 @@ const express = require("express");
 const morgan = require("morgan");
 const colors = require("colors");
 const cookieParser = require("cookie-parser");
+const mongoSanitize = require("express-mongo-sanitize");
+const helmet = require("helmet");
+const xss = require("xss-clean");
+const rateLimit = require("express-mongo-sanitize");
+const hpp = require("hpp");
+const cors = require("cors");
 const { connectDB } = require("./config/db");
 const { errorHandler } = require("./middleware/error");
 const { config } = require("./config/config");
@@ -21,14 +27,36 @@ const app = express();
 
 // JSON parse
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+
+// Middleware
+// Dev logging middleware
+if (config.node_env === "development") app.use(morgan("dev"));
 
 // Cookie parser
 app.use(cookieParser());
 
-//Middleware
-//Dev logging middleware
-if (config.node_env === "development") app.use(morgan("dev"));
+// Sanitize
+app.use(mongoSanitize());
+
+// Helmet
+app.use(helmet());
+
+// Prevent Xss Attacks
+app.use(xss());
+
+// Rate limiting
+const limiter = rateLimit({ windowMs: 10 * 10 * 1000, max: 100 });
+
+app.use(limiter);
+
+// Prevent http param pollution
+app.use(hpp());
+
+// Enable cors
+app.use(cors());
+
+// Set static folder
+app.use(express.static(path.join(__dirname, "public")));
 
 //Mount Routes
 app.use("/api/v1/bootcamps", bootcamps);

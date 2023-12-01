@@ -10,10 +10,7 @@ const errorHandler = (err, req, res, next) => {
   error.message = err.message;
 
   if (err.name === "CastError") {
-    error = new ErrorResponse(
-      `Resource not found with id of ${err.value}`,
-      404
-    );
+    error = new ErrorResponse(`Resource not found`, 404);
   } else if (err.code === 11000) {
     error = new ErrorResponse("Duplicate field entered", 400);
   } else if (err.name === "ValidationError") {
