@@ -1,7 +1,9 @@
-const { config } = require("../config/config");
+const crypto = require("crypto");
 const asyncHandler = require("express-async-handler");
+const { config } = require("../config/config");
 const { User } = require("../models/User");
 const { ErrorResponse } = require("../utils/errorResponse");
+const { sendEmail } = require("../utils/sendEmail");
 
 /**
  * @desc Register User
@@ -22,6 +24,12 @@ exports.register = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({ success: true, token });
 });
+
+exports.getAll = async (req, res, next) => {
+  const users = await User.find();
+
+  res.status(200).json({ success: true, users });
+};
 
 /**
  * @desc Login User
@@ -44,27 +52,6 @@ exports.login = asyncHandler(async (req, res, next) => {
   sendTokenResponse(user, 200, res);
 });
 
-// Set cookies on response
-const sendTokenResponse = (user, statusCode, res) => {
-  const token = user.getSignedJwtToken();
-
-  const currentDate = new Date();
-  const date = config.jwt.cookie_expire * 1000 * 60 * 60 * 24;
-  const futureDate = new Date(currentDate.getTime() + date);
-
-  const options = {
-    expires: futureDate,
-    httpOnly: true,
-  };
-
-  if (config.node_env === "production") options.secure = true;
-
-  res
-    .status(statusCode)
-    .cookie("token", token, options)
-    .json({ success: true, token });
-};
-
 /**
  * @desc Get Current User
  * @route POST /api/v1/auth/me
@@ -73,3 +60,101 @@ const sendTokenResponse = (user, statusCode, res) => {
 exports.getMe = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, data: req.user });
 });
+
+/**
+ * @desc Forget password
+ * @route POST /api/v1/auth/forgetpassword
+ * @access Public
+ */
+exports.forgetPassword = asyncHandler(async (req, res, next) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return next(
+      new ErrorResponse(`Resource not found with email ${email}`, 404)
+    );
+  }
+
+  const resetToken = user.getResetPasswordToken();
+
+  // Create reset URL
+  const resetUrl = `${req.protocol}://${req.get(
+    "host"
+  )}/api/v1/auth/resetpassword/${resetToken}`;
+
+  const message = `You are receiving this email because you (or someone else) has requested a password reset. Please make a PUT request to: \n\n ${resetUrl}`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Password Reset Token",
+      message,
+    });
+
+    res.status(200).json({ success: true, data: "Email sent" });
+  } catch (error) {
+    console.error(error);
+
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save({ validateBeforeSave: false });
+
+    return next(new ErrorResponse("Email could not be sent", 500));
+  }
+});
+
+/**
+ * @desc Reset Password
+ * @route POST /api/v1/auth/forgetpassword/:resettoken
+ * @access Public
+ */
+exports.resetPassword = asyncHandler(async (req, res, next) => {
+  const { resettoken } = req.params;
+
+  const resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(resettoken)
+    .digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    console.log("Token:", resettoken);
+    console.log("Hashed Token:", resetPasswordToken);
+    console.log("User:", user);
+    return next(new ErrorResponse("Invalid or expired token", 400));
+  }
+
+  user.password = req.body.password;
+  user.resetPasswordExpire = undefined;
+  user.resetPasswordToken = undefined;
+  await user.save();
+
+  sendTokenResponse(user, 200, res);
+});
+
+// Set cookies on response
+const sendTokenResponse = (user, statusCode, res) => {
+  const token = user.getSignedJwtToken();
+
+  const currentDate = new Date();
+  const cookieExpiration = config.jwt.cookie_expire * 24 * 60 * 60 * 1000;
+  const futureDate = new Date(currentDate.getTime() + cookieExpiration);
+
+  const cookieOptions = {
+    expires: futureDate,
+    httpOnly: true,
+    secure: config.node_env === "production",
+  };
+
+  res
+    .status(statusCode)
+    .cookie("token", token, cookieOptions)
+    .json({ success: true, token });
+};
