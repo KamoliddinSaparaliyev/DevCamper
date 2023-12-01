@@ -25,12 +25,6 @@ exports.register = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, token });
 });
 
-exports.getAll = async (req, res, next) => {
-  const users = await User.find();
-
-  res.status(200).json({ success: true, users });
-};
-
 /**
  * @desc Login User
  * @route POST /api/v1/auth/login
