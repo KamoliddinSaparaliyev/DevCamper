@@ -36,6 +36,37 @@ const ReviewSchema = new mongoose.Schema(
   }
 );
 
+// Static method to get avg of course tuitions
+ReviewSchema.statics.calculateAverageRating = async function (bootcampId) {
+  try {
+    const obj = await this.aggregate([
+      {
+        $match: { bootcamp: bootcampId },
+      },
+      {
+        $group: {
+          _id: "$bootcamp",
+          averageRating: { $avg: "$rating" },
+        },
+      },
+    ]);
+
+    await this.model("Bootcamp").findByIdAndUpdate(bootcampId, {
+      averageRating: obj[0].averageRating,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+ReviewSchema.post("save", async function () {
+  await this.constructor.calculateAverageRating(this.bootcamp);
+});
+
+ReviewSchema.pre("deleteOne", { document: true }, async function () {
+  await this.constructor.calculateAverageRating(this.bootcamp);
+});
+
 const Review = mongoose.model("Review", ReviewSchema);
 
 module.exports = { Review };
