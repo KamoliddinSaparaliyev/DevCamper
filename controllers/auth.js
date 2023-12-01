@@ -139,6 +139,48 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   sendTokenResponse(user, 200, res);
 });
 
+/**
+ * @desc Update User Details
+ * @route PUT /api/v1/auth/updatedetails
+ * @access Private
+ */
+exports.updateDetails = asyncHandler(async (req, res, next) => {
+  const { email, name } = req.body;
+  const fieldsToUpdate = {
+    email,
+    name,
+  };
+
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    { fieldsToUpdate },
+    { new: true, runValidators: true }
+  );
+
+  res.status(200).json({ success: true, data: user });
+});
+
+/**
+ * @desc Update User Details
+ * @route PUT /api/v1/auth/updatepassword
+ * @access Private
+ */
+exports.updatePassword = asyncHandler(async (req, res, next) => {
+  const { currentPassword, newPassword } = req.body;
+
+  const user = await User.findById(req.user.id).select("+password");
+
+  const isMatch = user.matchPassword(currentPassword);
+
+  if (!isMatch) throw new ErrorResponse("Passowrd is incorrect", 401);
+
+  user.password = newPassword;
+
+  await user.save();
+
+  sendTokenResponse(user, 200, res);
+});
+
 // Set cookies on response
 const sendTokenResponse = (user, statusCode, res) => {
   const token = user.getSignedJwtToken();

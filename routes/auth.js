@@ -1,25 +1,22 @@
+const { protect } = require("../middleware/auth");
 const {
   register,
   login,
   getMe,
   forgetPassword,
-  getAll,
   resetPassword,
+  updateDetails,
+  updatePassword,
 } = require("../controllers/auth");
-const { protect, authorize } = require("../middleware/auth");
 
 const router = require("express").Router();
 
-router.route("/register").post(register);
-
-router.route("/login").post(login);
-
-router.route("/me").get(protect, authorize("publisher", "user"), getMe);
-
-router.route("/forgetpassword").post(forgetPassword);
-
-router.route("/resetpassword/:resettoken").put(resetPassword);
-
-router.get("/", getAll);
+router.post("/register", register);
+router.post("/login", login);
+router.get("/me", protect, getMe);
+router.post("/forgetpassword", forgetPassword);
+router.put("/resetpassword/:resettoken", resetPassword);
+router.put("/updatedetails", protect, updateDetails);
+router.put("/updatepassword", protect, updatePassword);
 
 module.exports = router;
