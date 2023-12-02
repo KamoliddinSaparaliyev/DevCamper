@@ -3,16 +3,11 @@ const { config } = require("../config/config");
 
 const sendEmail = async (options) => {
   const transporter = nodemailer.createTransport({
-    // host: config.smtp.host,
-    // port: config.smtp.port,
-    // auth: {
-    //   user: config.smtp.email,
-    //   pass: config.smtp.password,
-    // },
-    service: "gmail",
+    host: config.smtp.host,
+    port: config.smtp.port,
     auth: {
-      user: "saparaliyevkamoliddin131@gmail.com",
-      pass: "rueybcygmruwzyun",
+      user: config.smtp.email,
+      pass: config.smtp.password,
     },
   });
 
