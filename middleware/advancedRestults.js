@@ -42,7 +42,7 @@ const advancedResults = (model, populate) =>
           } else if (fieldType === "Date" && !isNaN(Date.parse(searchValue))) {
             // If the field type is a date and the query is a valid date
             return { [field]: new Date(searchValue) };
-          } else if (fieldType === "ObjectId") {
+          } else if (fieldType === "ObjectId" && searchValue.length === 24) {
             // If the field type is a number and the query is a valid number
             return { [field]: searchValue };
           } else {
@@ -50,6 +50,20 @@ const advancedResults = (model, populate) =>
           }
         })
         .filter((condition) => condition !== null); // Filter out null conditions
+
+      if (req.query.select) {
+        const selectFields = req.query.select
+          .split(",")
+          .filter((field) => field !== ""); // Split select fields and remove empty strings
+        // Include select fields if they are not already included
+        if (!selectFields.includes("__v")) {
+          selectFields.push("__v");
+        }
+
+        query = query
+          .find({ $or: orConditions })
+          .select(selectFields.join(" "));
+      }
 
       query = query.find({ $or: orConditions });
     }
@@ -75,6 +89,14 @@ const advancedResults = (model, populate) =>
       }
 
       const data = await query;
+
+      if (data.length === 0) {
+        return res.status(204).send({
+          success: true,
+          message: `${model.modelName} list`,
+          data,
+        });
+      }
 
       return res.send({
         success: true,
@@ -116,6 +138,14 @@ const advancedResults = (model, populate) =>
         page: page - 1,
         limit,
       };
+    }
+
+    if (data.length === 0) {
+      return res.status(204).send({
+        success: true,
+        message: `${model.modelName} list`,
+        data,
+      });
     }
 
     return res.send({
