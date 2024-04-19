@@ -1,11 +1,14 @@
 const asyncHandler = require("express-async-handler");
 
+/**
+ * @param {import("mongoose").Model} model
+ */
 const advancedResults = (model, populate) =>
   asyncHandler(async (req, res, next) => {
     const reqQuery = { ...req.query };
 
     // Extract fields to remove from query
-    const removeFields = ["select", "sort", "page", "limit"];
+    const removeFields = ["select", "sort", "page", "limit", "q", "all"];
 
     // Remove fields from reqQuery
     removeFields.forEach((param) => delete reqQuery[param]);
@@ -22,6 +25,35 @@ const advancedResults = (model, populate) =>
     // Parse the modified query string back to an object
     let query = model.find(JSON.parse(queryStr));
 
+    if (req.query.q) {
+      const searchValue = req.query.q;
+
+      const modelFields = Object.keys(model.schema.paths);
+
+      const orConditions = modelFields
+        .map((field) => {
+          const fieldType = model.schema.paths[field].instance;
+          if (fieldType === "String") {
+            const searchRegex = new RegExp(searchValue, "i");
+            return { [field]: { $regex: searchRegex } };
+          } else if (fieldType === "Number" && !isNaN(searchValue)) {
+            // If the field type is a number and the query is a valid number
+            return { [field]: searchValue };
+          } else if (fieldType === "Date" && !isNaN(Date.parse(searchValue))) {
+            // If the field type is a date and the query is a valid date
+            return { [field]: new Date(searchValue) };
+          } else if (fieldType === "ObjectId") {
+            // If the field type is a number and the query is a valid number
+            return { [field]: searchValue };
+          } else {
+            return null; // Exclude fields of unsupported types or invalid queries
+          }
+        })
+        .filter((condition) => condition !== null); // Filter out null conditions
+
+      query = query.find({ $or: orConditions });
+    }
+
     // Select specific fields if specified in query
     if (req.query.select) {
       const fields = req.query.select.split(",").join(" ");
@@ -36,12 +68,28 @@ const advancedResults = (model, populate) =>
       query = query.sort("-createdAt");
     }
 
+    // Return all data
+    if (req.query.all === "true") {
+      if (populate) {
+        query = query.populate(populate);
+      }
+
+      const data = await query;
+
+      return res.send({
+        success: true,
+        message: `${model.modelName} list`,
+        total: data.length,
+        data,
+      });
+    }
+
     // Pagination
     const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 100;
+    const limit = parseInt(req.query.limit, 10) || 10;
     const startIndex = (page - 1) * limit;
     const endIndex = page * limit;
-    const total = await model.countDocuments();
+    const total = await model.find(query).countDocuments();
 
     query = query.skip(startIndex).limit(limit);
 
@@ -69,14 +117,15 @@ const advancedResults = (model, populate) =>
         limit,
       };
     }
-    res.advancedResults = {
+
+    return res.send({
       success: true,
+      message: `${model.modelName} list`,
       count: data.length,
-      total: total.length,
+      total,
       data,
       pagination,
-    };
-    next();
+    });
   });
 
 module.exports = { advancedResults };
